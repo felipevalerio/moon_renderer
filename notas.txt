@@ -122,3 +122,17 @@ main()
 - Todo objeto GDI criado com `CreateXxx` precisa de `DeleteObject` correspondente (o `hb` do fundo da janela não é liberado — leak pequeno, mas existe).
 - Strings `PCSTR` dependem de o buffer original (`&str` com `\0`) continuar vivo enquanto o ponteiro for usado — funciona no código atual porque tudo está no mesmo escopo de `main`, mas é um padrão que quebra fácil se refatorado.
 - Sufixo `A` = ANSI. Para suporte completo a Unicode, o caminho seria migrar pra `W` (`WNDCLASSEXW`, `CreateWindowExW`, etc.) usando `PCWSTR` com strings UTF-16.
+
+
+Para passar um ponteiro (referencia) para o wnd_proc é necessário utilizar a função CreateWindowExA.
+Nela existe uma parâmetro específico já reservado para caso seja necessário enviar algo (uma estrutura de dados, um ponteiro para um vetor etc...)
+para a wnd_proc.
+
+O parâmetro é o lpparam aceita um ponteiro para um valor a ser passado para a janela por meio da estrutura CREATETRUCT 
+No caso de Rust este valor foi passado como Some(framebuffer as *const std::ffi::c_void) onde "c_void" é um tipo de dado 
+usado para representar um ponteiro genérico do tipo C (void*).
+
+Mas ele é diferente da palavra reservada "void" em C usada para retorno de funções.
+
+SetWindowLongPtrA -> usado para salvar a estrutura (meu ponteiro/referencia) dentro da janela (wnd_proc) durante o WN_CREATE
+GetWindowLongPtr -> usado para recuperar a estrutura que foi salva. Usado dentro do WN_PAINT
