@@ -14,36 +14,15 @@ mod ppm;
 extern "system" fn wnd_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
         match msg {
+            WM_CREATE => {
+                let create_struct = l_param.0 as *const CREATESTRUCTA;
+                let framebuffer_ptr = (*create_struct).lpCreateParams as isize;
+
+                SetWindowLongPtrA(hwnd, GWLP_USERDATA, framebuffer_ptr);
+                LRESULT(0)
+            }
             WM_PAINT => {
-                let mut ps = PAINTSTRUCT::default();
-                let hdc = BeginPaint(hwnd, &mut ps);
-
-                let mut rect = RECT::default();
-                let _ = GetClientRect(hwnd, &mut rect);
-
-                let width = rect.right - rect.left;
-                let height = rect.bottom - rect.top;
-
-                let rect_width = 200;
-                let rect_height = 150;
-                let rect_left = (width - rect_width) / 2;
-                let rect_top = (height - rect_height) / 2;
-
-                let blue_brush = CreateSolidBrush(COLORREF(0x00FF0000));
-                let old_brush = SelectObject(hdc, blue_brush);
-
-                let _ = Rectangle(
-                    hdc,
-                    rect_left,
-                    rect_top,
-                    rect_left + rect_width,
-                    rect_top + rect_height,
-                );
-
-                let _ = SelectObject(hdc, old_brush);
-                let _ = DeleteObject(blue_brush);
-
-                let _ = EndPaint(hwnd, &ps);
+                
                 LRESULT(0)
             }
             WM_CLOSE => {
@@ -62,7 +41,8 @@ extern "system" fn wnd_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPAR
 fn main() {
 
 
-    create_ppm(200, 100);
+    let framebuffer: *mut u8 = create_ppm(200, 100).as_mut_ptr();
+
 
     unsafe {
         let h_instance = GetModuleHandleA(None).unwrap();
@@ -89,6 +69,7 @@ fn main() {
             hIconSm: LoadIconW(None, IDI_APPLICATION).unwrap(),
         };
 
+        // Registra a classe no sistema
         if RegisterClassExA(&wc) == 0 {
             MessageBoxA(
                 None,
@@ -101,6 +82,7 @@ fn main() {
 
         let window_name_pcstr = PCSTR::from_raw(window_name.as_ptr());
         
+        // criação da janela
         let hwnd = CreateWindowExA(
             WINDOW_EX_STYLE(0),
             class_name_pcstr,
@@ -113,7 +95,7 @@ fn main() {
             None,
             None,
             h_instance,
-            None,
+            Some(framebuffer as *const std::ffi::c_void),
         );
 
         match hwnd {

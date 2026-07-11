@@ -1,7 +1,7 @@
 
-pub fn create_ppm(width: i32, height: i32) {
+pub fn create_ppm(width: i32, height: i32) -> Vec<u8> {
 
-	// let framebuffer: Vec<u8>;
+	let mut framebuffer: Vec<u8> = Vec::with_capacity((width * height * 4) as usize);
 
 	for j in 0..height {
 		for i in 0..width {
@@ -14,7 +14,12 @@ pub fn create_ppm(width: i32, height: i32) {
 			let ib: i32 = (255.999 * b) as i32;
 
 			println!("{} {} {}", ir, ig, ib);
+
+			framebuffer.push(ir as u8);
+			framebuffer.push(ig as u8);
+			framebuffer.push(ib as u8);
 		}
 	}
 
+	framebuffer
 }
