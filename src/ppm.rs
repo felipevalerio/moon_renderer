@@ -1,3 +1,9 @@
+struct Framebuffer {
+	width: i32,
+	heigth: i32,
+	framebuffer: Vec<u8>
+}
+
 
 pub fn create_ppm(width: i32, height: i32) -> Vec<u8> {
 

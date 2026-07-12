@@ -40,8 +40,10 @@ extern "system" fn wnd_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPAR
 
 fn main() {
 
+    let width: i32 = 200;
+    let height: i32 = 100;
 
-    let framebuffer: *mut u8 = create_ppm(200, 100).as_mut_ptr();
+    let framebuffer: *mut u8 = create_ppm(width, height).as_mut_ptr();
 
 
     unsafe {
