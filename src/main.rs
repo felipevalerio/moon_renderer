@@ -6,9 +6,15 @@ use windows::{
     Win32::Graphics::Gdi::*,
 };
 
+mod ppm;
 use crate::ppm::create_ppm;
 
-mod ppm;
+struct Framebuffer {
+	width: i32,
+	height: i32,
+	frame_vec: Vec<u8>
+}
+
 
 // WndProc -> Responsável pelo comportamento (responder a eventos/mensagens) que acontecem na janela
 extern "system" fn wnd_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
@@ -43,7 +49,13 @@ fn main() {
     let width: i32 = 200;
     let height: i32 = 100;
 
-    let framebuffer: *mut u8 = create_ppm(width, height).as_mut_ptr();
+    let mut framebuffer = Framebuffer {
+        width,
+        height,
+        frame_vec: Vec::with_capacity((width * height * 4) as usize)
+    };
+
+    create_ppm(&mut framebuffer);
 
 
     unsafe {
