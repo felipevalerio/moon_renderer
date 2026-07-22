@@ -15,16 +15,29 @@ struct Framebuffer {
 	frame_vec: Vec<u8>
 }
 
+impl Framebuffer {
+
+    pub fn set_pixels(&mut self, x: i32, y: i32, r: u8, g: u8, b: u8) {
+
+        let index = ((y * self.width + x) * 4) as usize;
+
+        self.frame_vec[index] = r;
+        self.frame_vec[index + 1] = g;
+        self.frame_vec[index + 2] = b;
+        self.frame_vec[index + 3] = 255;
+    }
+}
+
 
 // WndProc -> Responsável pelo comportamento (responder a eventos/mensagens) que acontecem na janela
 extern "system" fn wnd_proc(hwnd: HWND, msg: u32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     unsafe {
         match msg {
             WM_CREATE => {
-                let create_struct = l_param.0 as *const CREATESTRUCTA;
-                let framebuffer_ptr = (*create_struct).lpCreateParams as isize;
+                let create_struct = &*(l_param.0 as *const CREATESTRUCTA);
+                let framebuffer = create_struct.lpCreateParams as *mut Framebuffer;
 
-                SetWindowLongPtrA(hwnd, GWLP_USERDATA, framebuffer_ptr);
+                SetWindowLongPtrA(hwnd, GWLP_USERDATA, framebuffer as isize);
                 LRESULT(0)
             }
             WM_PAINT => {
@@ -49,14 +62,15 @@ fn main() {
     let width: i32 = 200;
     let height: i32 = 100;
 
-    let mut framebuffer = Framebuffer {
+    let mut framebuffer = Box::new(Framebuffer {
         width,
         height,
-        frame_vec: Vec::with_capacity((width * height * 4) as usize)
-    };
+        frame_vec: vec![0; (width * height * 4) as usize],
+    });
 
     create_ppm(&mut framebuffer);
 
+    let framebuffer_ptr = Box::into_raw(framebuffer);
 
     unsafe {
         let h_instance = GetModuleHandleA(None).unwrap();
@@ -109,7 +123,7 @@ fn main() {
             None,
             None,
             h_instance,
-            Some(framebuffer as *const std::ffi::c_void),
+            Some(framebuffer_ptr.cast()),
         );
 
         match hwnd {
